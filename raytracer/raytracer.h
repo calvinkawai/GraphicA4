@@ -16,6 +16,8 @@ class Raytracer {
 public:
 	// Renders 3D scene to an image given camera and lights setup.
 	void render(Camera& camera, Scene& scene, LightList& light_list, Image& image);
+    void renderWithoutAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth);
+    void renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, int ray_num);
 
 private:
 
@@ -41,7 +43,7 @@ private:
     
     
     //METHOD2: Soft shadowing using spherical light area
-    Color softShadowingSpherical(Ray3D& ray, Scene& scene, LightList& light_list, int radius);
+    Color softShadowingSpherical(Ray3D& ray, Scene& scene, LightList& light_list, double radius);
     
     // --------------------------
 
