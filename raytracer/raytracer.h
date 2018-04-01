@@ -26,10 +26,24 @@ private:
 	// Traversal code for the scene, the ray is transformed into
 	// the object space of each node where intersection is performed.
 	void traverseScene(Scene& scene, Ray3D& ray);
-
+    
 	// After intersection, calculate the color of the ray by shading it
 	// with all light sources in the scene.
 	void computeShading(Ray3D& ray, LightList& light_list);
+    
+    // -------- additional ---------
+    // METHOD0: hard shadow
+    Color hardShadowing(Ray3D& ray, Scene& scene, LightList& light_list);
+    
+    // METHOD1: Soft shadowing using light area as grid
+    // uniform distribution through all the samples
+    Color softShadowingGrid(Ray3D& ray, Scene& scene, LightList& light_list, int grid_size);
+    
+    
+    //METHOD2: Soft shadowing using spherical light area
+    Color softShadowingSpherical(Ray3D& ray, Scene& scene, LightList& light_list, int radius);
+    
+    // --------------------------
 
 	// Precompute the modelToWorld and worldToModel transformations for each
     // object in the scene.
