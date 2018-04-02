@@ -9,6 +9,7 @@
 
 
 #include "raytracer.h"
+#include <omp.h>
 #include <cmath>
 #include <iostream>
 #include <cstdlib>
@@ -72,52 +73,6 @@ Color Raytracer::hardShadowing(Ray3D& ray, Scene& scene, LightList& light_list){
     }
     
     return col = (1/ (double) light_list.size())*col;
-}
-
-
-// METHOD1: Soft shadowing using light area as grid
-// uniform distribution through all the samples
-Color Raytracer::softShadowingGrid(Ray3D& ray, Scene& scene, LightList& light_list, int grid_size){
-    
-    Color col(0.0, 0.0, 0.0);
-    
-    if (!ray.intersection.none) {
-        
-        for (size_t index = 0; index < light_list.size(); ++index) {
-            LightSource* light = light_list[index];
-            
-            double ix=- grid_size*0.5;
-            
-            while (ix <= grid_size*0.5){
-                
-                double iy = -grid_size*0.5;
-                while (iy<=grid_size*0.5){
-                    
-//                    double iz = -grid_size*0.5;
-//                    while (iz <=grid_size*0.5){
-                        Ray3D shadowRay;
-                        Point3D light_pos = light->get_position() + Vector3D(ix, iy, 0);
-                        
-                        shadowRay.dir = light_pos - ray.intersection.point;
-                        shadowRay.dir.normalize();
-                        shadowRay.origin = ray.intersection.point + 0.002*shadowRay.dir;
-                        
-                        traverseScene(scene, shadowRay);
-                        
-                        if (shadowRay.intersection.none){
-                            computeShading(ray, light_list);
-                            col = col + ray.col;
-                        }
-                        
-//                        iz= iz+0.5;
-//                    }
-                    iy= iy+0.5;
-                }
-                ix = ix+0.5;
-            }
-        }
-    }
-    return col = (1/ ((double) light_list.size()*(2*grid_size+1)*(2*grid_size+1)))*col;
 }
 
 
@@ -213,7 +168,7 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Image& image) {
     
     // for shading
-    int depth = 1;
+    int depth = 2;
     
     // for anti-aliasing
     int ray_num = 4;
@@ -270,6 +225,7 @@ void Raytracer::renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& 
     viewToWorld = camera.initInvViewMatrix();
     
     // Construct a ray for each pixel.
+    #pragma omp parallel for
     for (int i = 0; i < image.height; i++) {
         for (int j = 0; j < image.width; j++) {
             // Sets up ray origin and direction in view space,
@@ -318,5 +274,8 @@ void Raytracer::renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& 
         }
     }
 }
+
+
+
 
 
