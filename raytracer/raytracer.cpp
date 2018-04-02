@@ -125,7 +125,7 @@ Color Raytracer::softShadowingGrid(Ray3D& ray, Scene& scene, LightList& light_li
 Color Raytracer::softShadowingSpherical(Ray3D& ray, Scene& scene, LightList& light_list, double radius){
     
     // number of sampling for each intersection.
-    int ray_num = 100;
+    int ray_num = 50;
     
     Color col(0.0, 0.0, 0.0);
     
@@ -136,7 +136,7 @@ Color Raytracer::softShadowingSpherical(Ray3D& ray, Scene& scene, LightList& lig
             LightSource* light = light_list[index];
             
             // uniform distribution for all number of sampling
-            for (int num=0; num < ray_num; ray_num++){
+            for (int num=0; num < ray_num; num++){
                 
                 // random sampling for spherical light area
                 double r = radius * (rand()/((double) RAND_MAX)) ;
@@ -213,7 +213,7 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Image& image) {
     
     // for shading
-    int depth = 2;
+    int depth = 1;
     
     // for anti-aliasing
     int ray_num = 4;
