@@ -33,16 +33,35 @@ int main(int argc, char* argv[])
 	Material jade(Color(0, 0, 0), Color(0.54,0.89,0.63),
 		Color(0.316228,0.316228,0.316228),
 		12.8);
+    
 
 	// Defines a point light source.
-	PointLight* pLight = new PointLight(Point3D(0,0,5), Color(0.9,0.9,0.9));
+	PointLight* pLight = new PointLight(Point3D(0,0,0), Color(0.9,0.9,0.9));
 	light_list.push_back(pLight);
+    
+    //-------------- additional light source --------------
+    PointLight* pLight2 = new PointLight(Point3D(0,3,0), Color(0.9,0.9,0.9));
+    light_list.push_back(pLight2);
+    //------------------------------------------------------
+
+    //-------------- additional light source --------------
+    PointLight* pLight3 = new PointLight(Point3D(5,0,0), Color(0.9,0.9,0.9));
+    light_list.push_back(pLight3);
+    //------------------------------------------------------
+    
 	
 	// Add a unit square into the scene with material mat.
 	SceneNode* sphere = new SceneNode(new UnitSphere(), &gold);
 	scene.push_back(sphere);
 	SceneNode* plane = new SceneNode(new UnitSquare(), &jade);
 	scene.push_back(plane);
+    
+    //-------------------- additional plane --------------------
+    SceneNode* plane2 = new SceneNode(new UnitSquare(), &jade);
+    scene.push_back(plane2);
+    //-----------------------------------------------------------
+    
+    
 
 	// Apply some transformations to the sphere and unit square.
 	double factor1[3] = { 1.0, 2.0, 1.0 };
@@ -55,6 +74,16 @@ int main(int argc, char* argv[])
 	plane->translate(Vector3D(0, 0, -7));
 	plane->rotate('z', 45);
 	plane->scale(Point3D(0, 0, 0), factor2);
+    
+    //-------------------- additional plane --------------------
+    double factor3[3] = { 6.0, 6.0, 6.0 };
+    plane2->translate(Vector3D(0,  0, -5));
+    plane2->rotate('z', 45);
+    plane2->rotate('y', 45);
+    plane2->translate(Vector3D(0,  0, -2));
+    plane2->scale(Point3D(0, 0, 0), factor3);
+    
+    //-----------------------------------------------------------
 
 	// Render the scene, feel free to make the image smaller for
 	// testing purposes.	
