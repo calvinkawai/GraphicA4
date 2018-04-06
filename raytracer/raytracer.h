@@ -16,8 +16,10 @@ class Raytracer {
 public:
 	// Renders 3D scene to an image given camera and lights setup.
 	void render(Camera& camera, Scene& scene, LightList& light_list, Image& image);
-    void renderWithoutAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth);
-    void renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, int ray_num);
+    void renderWithoutAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, bool DOF);
+    void renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, int AA_num, bool DOF);
+    
+    void renderWithDOF(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, int ray_num);
 
 private:
 
@@ -50,5 +52,9 @@ private:
 	// Precompute the modelToWorld and worldToModel transformations for each
     // object in the scene.
 	void computeTransforms(Scene& scene);
+    
+    // return the secondary ray
+    Ray3D depthOfField(Ray3D& primary_ray, Point3D& origin, double focal_len, double apeture_size);
+    Ray3D refractedRay(Ray3D& ray, double n1, double n2);
 
 };

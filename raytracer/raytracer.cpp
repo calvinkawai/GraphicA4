@@ -20,6 +20,7 @@ void Raytracer::traverseScene(Scene& scene, Ray3D& ray)  {
 
 		if (node->obj->intersect(ray, node->worldToModel, node->modelToWorld)) {
 			ray.intersection.mat = node->mat;
+            ray.intersection.refraction = node->mat->refraction;
 		}
 	}
 }
@@ -47,6 +48,7 @@ void Raytracer::computeShading(Ray3D& ray, LightList& light_list) {
 }
 
 
+
 // METHOD0: hard shadow
 Color Raytracer::hardShadowing(Ray3D& ray, Scene& scene, LightList& light_list){
     
@@ -68,7 +70,10 @@ Color Raytracer::hardShadowing(Ray3D& ray, Scene& scene, LightList& light_list){
             if (shadowRay.intersection.none){
                 computeShading(ray, light_list);
                 col = col + ray.col;
+                
             }
+
+            
         }
     }
     
@@ -80,7 +85,7 @@ Color Raytracer::hardShadowing(Ray3D& ray, Scene& scene, LightList& light_list){
 Color Raytracer::softShadowingSpherical(Ray3D& ray, Scene& scene, LightList& light_list, double radius){
     
     // number of sampling for each intersection.
-    int ray_num = 50;
+    int ray_num = 20;
     
     Color col(0.0, 0.0, 0.0);
     
@@ -123,16 +128,18 @@ Color Raytracer::softShadowingSpherical(Ray3D& ray, Scene& scene, LightList& lig
 Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int depth) {
 	Color col(0.0, 0.0, 0.0);
 	traverseScene(scene, ray);
-
+    
+    
 	// Don't bother shading if the ray didn't hit
 	// anything.
 	if (!ray.intersection.none) {
-//        col = hardShadowing(ray, scene, light_list);
-//        int grid = 2
-//        col = softShadowingGrid(ray, scene, light_list, 2);
         
-        int radius = 2;
-        col = softShadowingSpherical(ray, scene, light_list, 2);
+        
+        col = hardShadowing(ray, scene, light_list);
+
+        
+//        int radius = 2;
+//        col = softShadowingSpherical(ray, scene, light_list, 2);
 
 	}
 
@@ -148,14 +155,15 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 		N.normalize();
 		Vector3D R = 2.0 * (L.dot(N)) * N - L;
 		R.normalize();
-
-
+        
 		refRay.origin = ray.intersection.point + 0.001*R;
 		refRay.dir = R;
-
-		Color refCol(0.0, 0.0, 0.0);
+        
+        Color refCol(0.0, 0.0, 0.0);
+        
 		refCol = refCol + shadeRay(refRay, scene, light_list, --depth);
 		refRay.col = refCol;
+        
 		if (L.dot(N) > 1e-6) {
             col = col + 0.9 * ray.intersection.mat->specular * refCol;
 		}
@@ -168,18 +176,20 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Image& image) {
     
     // for shading
-    int depth = 2;
+    int depth = 3;
     
     // for anti-aliasing
-    int ray_num = 4;
-    
-//    renderWithoutAliasing(camera, scene, light_list, image, depth);
-    renderWithAntiAliasing(camera, scene, light_list, image, depth, ray_num);
+    int AA_num = 4;
+    bool DOF = false;
+
+    renderWithoutAliasing(camera, scene, light_list, image, depth, DOF);
+//    renderWithAntiAliasing(camera, scene, light_list, image, depth, AA_num, DOF);
+
 }
 
 // rendering without anti-aliasing
 // normal rendering
-void Raytracer::renderWithoutAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth){
+void Raytracer::renderWithoutAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, bool DOF){
     computeTransforms(scene);
 
     Matrix4x4 viewToWorld;
@@ -188,6 +198,7 @@ void Raytracer::renderWithoutAliasing(Camera& camera, Scene& scene, LightList& l
     viewToWorld = camera.initInvViewMatrix();
 
      // Construct a ray for each pixel.
+    #pragma omp parallel for
     for (int i = 0; i < image.height; i++) {
         for (int j = 0; j < image.width; j++) {
             
@@ -206,8 +217,26 @@ void Raytracer::renderWithoutAliasing(Camera& camera, Scene& scene, LightList& l
             direction = viewToWorld * direction;
             origin = viewToWorld * origin;
             ray = Ray3D(origin, direction);
-
-            Color col = shadeRay(ray, scene, light_list, depth);
+            
+            Color col(0.0, 0.0, 0.0);
+            
+            // render with depth of field
+            if (DOF){
+                double focal_len = 5.0;
+                double apeture_size = 1.0;
+                // ray_num samples for calculating DOF
+                int dof_num = 20;
+                Color dofCol(0.0, 0.0, 0.0);
+                for (int num = 0; num < dof_num; num++){
+                    Ray3D secondary_ray = depthOfField(ray, origin, focal_len, apeture_size);
+                    col = col + shadeRay(secondary_ray, scene, light_list, depth);
+                }
+                col = double(1.0/dof_num)*col;
+   
+            }else{
+                col = shadeRay(ray, scene, light_list, depth);
+            }
+                
             image.setColorAtPixel(i, j, col);
         
         }
@@ -216,7 +245,7 @@ void Raytracer::renderWithoutAliasing(Camera& camera, Scene& scene, LightList& l
 }
 
 //render with antialising
-void Raytracer::renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, int ray_num) {
+void Raytracer::renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& light_list, Image& image, int depth, int AA_num, bool DOF) {
     computeTransforms(scene);
     
     Matrix4x4 viewToWorld;
@@ -233,16 +262,17 @@ void Raytracer::renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& 
             
             Color col(0.0, 0.0, 0.0);
             
-            // 4 subpixels
+            // 4 super pixels
             for (int dx_i=0; dx_i<=1; dx_i++){
                 for(int dy_i=0; dy_i<=1; dy_i++){
+                    
                     //x -- {-0.5, 0.5, 1.5}
                     double dx = -0.5 + dx_i;
                     double dy = -0.5 + dy_i;
                     
                     // averaging all the samples for anti-aliasing
-                    // ray_num numples for each subpixels
-                    for (int num=0; num<ray_num; num++){
+                    // ray_num numples for each super pixels
+                    for (int num=0; num< AA_num; num++){
                         
                         // random position at the subpixel for x and y
                         double sub_x = rand()/((double) RAND_MAX) + dx;
@@ -261,20 +291,79 @@ void Raytracer::renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& 
                         origin = viewToWorld * origin;
                         ray = Ray3D(origin, direction);
                         
-                        col = col + shadeRay(ray, scene, light_list, depth);
+                        // render with depth of field
+                        if (DOF){
+                            // ------ variable for Depth of Field ----------
+                            double focal_len = 5.0;
+                            double apeture_size = 1.0;
+                            // ray_num samples for calculating DOF
+                            int  dof_num = 10;
+                            // ---------------------------------------------
+                            
+                            Color dofCol(0.0, 0.0, 0.0);
+            
+                            for (int count = 0; count < dof_num; count++){
+                                Ray3D secondary_ray = depthOfField(ray, origin, focal_len, apeture_size);
+                                dofCol = dofCol + shadeRay(secondary_ray, scene, light_list, depth);
+                            }
+                            col = col + double(1.0/dof_num)*dofCol;
+                
+                        }else{
+                            col = col + shadeRay(ray, scene, light_list, depth);
+                        }
+                        
                     }
                 }
             }
             
             // uniform distribution
-            col = ((double) 1/(4*ray_num))*col;
-    
+            col = double(1.0/(4*AA_num))*col;
             image.setColorAtPixel(i, j, col);
                 
         }
     }
 }
 
+
+
+
+// calculate the secondary ray from random point on lens
+Ray3D Raytracer::depthOfField(Ray3D& primary_ray, Point3D& origin, double focal_len, double apeture_size){
+    
+    // focal point
+    Point3D focal_point = origin + focal_len*primary_ray.dir;
+    
+    // random point on lens
+    double r1 = -apeture_size + 2*apeture_size*(rand()/((double) RAND_MAX));
+    double r2 = -apeture_size + 2*apeture_size*(rand()/((double) RAND_MAX));
+    
+    Point3D point_on_lens = origin + Vector3D(r1, r2, 0.0);
+    
+    // secondary ray direction
+    Vector3D secondary_dir = focal_point - point_on_lens;
+    secondary_dir.normalize();
+    
+    return Ray3D(point_on_lens, secondary_dir);
+    
+    
+}
+
+
+// ray intersected some objects that will refract the light
+Ray3D Raytracer::refractedRay(Ray3D& ray, double n1, double n2){
+    
+    double n1_n2 = n1 / n2;
+    Vector3D normal = ray.intersection.normal;
+    double cos_angle_1 = normal.dot(-ray.dir);
+    double cos_angle_2 = sqrt( 1.0 - n1_n2 * n1_n2 * (1.0 - cos_angle_1 * cos_angle_1));
+    
+    // refracted direction
+    Vector3D refract_dir = (n1_n2 * ray.dir) + (n1_n2 * cos_angle_1 - cos_angle_2)*normal;
+    refract_dir.normalize();
+    
+    return Ray3D(ray.intersection.point, refract_dir);
+    
+}
 
 
 
