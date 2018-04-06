@@ -20,7 +20,7 @@ void Raytracer::traverseScene(Scene& scene, Ray3D& ray)  {
 
 		if (node->obj->intersect(ray, node->worldToModel, node->modelToWorld)) {
 			ray.intersection.mat = node->mat;
-            ray.intersection.refraction = node->mat->refraction;
+//            ray.intersection.refraction = node->mat->refraction;
 		}
 	}
 }
