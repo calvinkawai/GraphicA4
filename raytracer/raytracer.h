@@ -58,6 +58,6 @@ void computeTransforms(Scene& scene);
 
 // return the secondary ray
 Ray3D depthOfField(Ray3D& primary_ray, Point3D& origin, double focal_len, double apeture_size);
-Ray3D refractedRay(Ray3D& ray, double n1, double n2);
+Vector3D glossyRefDirection(Vector3D N, Vector3D R, double roughness);
 
 };

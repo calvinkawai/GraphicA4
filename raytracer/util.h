@@ -127,7 +127,7 @@ std::ostream& operator <<(std::ostream& o, const Color& c);
 struct Material {
         Material(Color ambient, Color diffuse, Color specular, double exp) :
                 ambient(ambient), diffuse(diffuse), specular(specular),
-                specular_exp(exp) {
+                specular_exp(exp), hasTexture(false) {
         }
 
         // Ambient components for Phong shading.
@@ -140,7 +140,7 @@ struct Material {
         double specular_exp;
 
         // Texture
-        bool hasTexture = false;
+        bool hasTexture;
 
         // Texture rgb channel unsigned long int width, long int height,
         // unsigned char *rarray, unsigned char *garray, unsigned char *barray
@@ -171,6 +171,9 @@ struct Intersection {
         // Texture coordinate
         double u;
         double v;
+    
+        // roughness coefficient, for glossy reflection
+        double roughness;
 };
 
 // Ray structure.

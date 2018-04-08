@@ -20,7 +20,9 @@ void Raytracer::traverseScene(Scene& scene, Ray3D& ray)  {
 
                 if (node->obj->intersect(ray, node->worldToModel, node->modelToWorld)) {
                         ray.intersection.mat = node->mat;
-//            ray.intersection.refraction = node->mat->refraction;
+                    
+                        // assign roughness
+                        ray.intersection.roughness = node->roughness;
                 }
         }
 }
@@ -166,7 +168,15 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
 
                 Color refCol(0.0, 0.0, 0.0);
 
-                refCol = refCol + shadeRay(refRay, scene, light_list, --depth);
+                // average out all the random samples with glossy reflection
+                for (int i=0; i< 20; i++){
+                        // compute new direction for glossy reflection
+                        refRay.dir = glossyRefDirection(N, R, ray.intersection.roughness);
+                        refRay.origin = ray.intersection.point + 0.001*refRay.dir;
+                        refCol = refCol + 1.0/20*shadeRay(refRay, scene, light_list, --depth);
+                
+                }
+            
                 refRay.col = refCol;
 
                 col = col + 0.9 * ray.intersection.mat->specular * refCol;
@@ -337,7 +347,7 @@ void Raytracer::renderWithAntiAliasing(Camera& camera, Scene& scene, LightList& 
 
 
 
-
+// --------------- helper function for Depth of Field -------------------//
 // calculate the secondary ray from random point on lens
 Ray3D Raytracer::depthOfField(Ray3D& primary_ray, Point3D& origin, double focal_len, double apeture_size){
 
@@ -360,19 +370,30 @@ Ray3D Raytracer::depthOfField(Ray3D& primary_ray, Point3D& origin, double focal_
 }
 
 
-// ray intersected some objects that will refract the light
-Ray3D Raytracer::refractedRay(Ray3D& ray, double n1, double n2){
-
-        double n1_n2 = n1 / n2;
-        Vector3D normal = ray.intersection.normal;
-        double cos_angle_1 = normal.dot(-ray.dir);
-        double cos_angle_2 = sqrt( 1.0 - n1_n2 * n1_n2 * (1.0 - cos_angle_1 * cos_angle_1));
-
-        // refracted direction
-        Vector3D refract_dir = (n1_n2 * ray.dir) + (n1_n2 * cos_angle_1 - cos_angle_2)*normal;
-        refract_dir.normalize();
-
-        return Ray3D(ray.intersection.point, refract_dir);
+// --------------- helper function for glossy reflection -------------------//
+// helper function for glossy reflection
+// calculate the new reflected ray direction
+Vector3D Raytracer::glossyRefDirection(Vector3D N, Vector3D R, double roughness){
+    
+    //orthonormal basis at intersection point
+    Vector3D u = R.cross(N);
+    
+    u.normalize();
+    
+    Vector3D v = R.cross(u);
+    v.normalize();
+    
+    //choose uniformly sampled random direction
+    double theta = 2*M_PI*((rand()/((double) RAND_MAX))*roughness);
+    double phi = 2*M_PI*((rand()/((double) RAND_MAX))*roughness);
+    double x = sin(theta) * cos(phi);
+    double y = sin(theta) * sin(phi);
+    double z = cos(theta);
+    
+    Vector3D newR = x*u + y*v + z*R;
+    newR.normalize();
+    
+    return newR;
 }
 
 

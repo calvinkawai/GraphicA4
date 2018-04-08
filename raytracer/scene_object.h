@@ -28,12 +28,17 @@ virtual ~SceneObject() {
 struct SceneNode {
         SceneNode()
                 :
-                obj(NULL), mat(NULL) {
+                obj(NULL), mat(NULL), roughness(0.0) {
         }
-
+    
         SceneNode(SceneObject* obj, Material* mat)
                 :
-                obj(obj), mat(mat) {
+                obj(obj), mat(mat), roughness(0.0) {
+        }
+
+        SceneNode(SceneObject* obj, Material* mat, double roughness)
+                :
+                obj(obj), mat(mat), roughness(roughness) {
         }
 
         ~SceneNode() {
@@ -54,6 +59,10 @@ struct SceneNode {
 
         // Pointer to material of the object, used in shading.
         Material* mat;
+    
+        //------- additional pointer ----------
+        // roughness of each object, used in glossy reflection.
+        double roughness;
 
         // Each node maintains a transformation matrix, which maps the
         // geometry from object space to world space and the inverse.
