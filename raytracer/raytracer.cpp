@@ -20,7 +20,7 @@ void Raytracer::traverseScene(Scene& scene, Ray3D& ray)  {
 
                 if (node->obj->intersect(ray, node->worldToModel, node->modelToWorld)) {
                         ray.intersection.mat = node->mat;
-                    
+
                         // assign roughness
                         ray.intersection.roughness = node->roughness;
                 }
@@ -169,22 +169,22 @@ Color Raytracer::shadeRay(Ray3D& ray, Scene& scene, LightList& light_list, int d
                 Color refCol(0.0, 0.0, 0.0);
 
                 // average out all the random samples with glossy reflection
-                for (int i=0; i< 20; i++){
+                for (int i=0; i< 20; i++) {
                         // compute new direction for glossy reflection
                         refRay.dir = glossyRefDirection(N, R, ray.intersection.roughness);
                         refRay.origin = ray.intersection.point + 0.001*refRay.dir;
                         refCol = refCol + 1.0/20*shadeRay(refRay, scene, light_list, --depth);
-                
+
                 }
-            
+
                 refRay.col = refCol;
 
-                col = col + 0.9 * ray.intersection.mat->specular * refCol;
+                col = col + ray.intersection.mat->specular * refCol;
 
                 if (ray.intersection.mat->hasTexture) {
 
                         Color textureCol = textureColor(ray);
-                        col = col + textureCol;
+                        col = 0.5 * col + textureCol;
                 }
         }
         col.clamp();
@@ -201,8 +201,8 @@ void Raytracer::render(Camera& camera, Scene& scene, LightList& light_list, Imag
         int AA_num = 4;
         bool DOF = false;
 
-        //renderWithoutAliasing(camera, scene, light_list, image, depth, DOF);
-        renderWithAntiAliasing(camera, scene, light_list, image, depth, AA_num, DOF);
+        renderWithoutAliasing(camera, scene, light_list, image, depth, DOF);
+        //renderWithAntiAliasing(camera, scene, light_list, image, depth, AA_num, DOF);
 
 }
 
@@ -374,26 +374,26 @@ Ray3D Raytracer::depthOfField(Ray3D& primary_ray, Point3D& origin, double focal_
 // helper function for glossy reflection
 // calculate the new reflected ray direction
 Vector3D Raytracer::glossyRefDirection(Vector3D N, Vector3D R, double roughness){
-    
-    //orthonormal basis at intersection point
-    Vector3D u = R.cross(N);
-    
-    u.normalize();
-    
-    Vector3D v = R.cross(u);
-    v.normalize();
-    
-    //choose uniformly sampled random direction
-    double theta = 2*M_PI*((rand()/((double) RAND_MAX))*roughness);
-    double phi = 2*M_PI*((rand()/((double) RAND_MAX))*roughness);
-    double x = sin(theta) * cos(phi);
-    double y = sin(theta) * sin(phi);
-    double z = cos(theta);
-    
-    Vector3D newR = x*u + y*v + z*R;
-    newR.normalize();
-    
-    return newR;
+
+        //orthonormal basis at intersection point
+        Vector3D u = R.cross(N);
+
+        u.normalize();
+
+        Vector3D v = R.cross(u);
+        v.normalize();
+
+        //choose uniformly sampled random direction
+        double theta = 2*M_PI*((rand()/((double) RAND_MAX))*roughness);
+        double phi = 2*M_PI*((rand()/((double) RAND_MAX))*roughness);
+        double x = sin(theta) * cos(phi);
+        double y = sin(theta) * sin(phi);
+        double z = cos(theta);
+
+        Vector3D newR = x*u + y*v + z*R;
+        newR.normalize();
+
+        return newR;
 }
 
 

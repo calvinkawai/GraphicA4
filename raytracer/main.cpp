@@ -46,9 +46,15 @@ int main(int argc, char* argv[])
                        Color(0.628281, 0.555802, 0.366065),
                        51.2);
 
+        Material checker(Color(0, 0, 0), Color(0,0,0),
+                         Color(0.628281, 0.555802, 0.366065),
+                         51.2);
+
         sun.hasTexture = true;
         sky.hasTexture = true;
         water.hasTexture = true;
+        checker.hasTexture = true;
+
         std::cout << "Reading texture ... \n";
 
         // readin texture
@@ -56,7 +62,7 @@ int main(int argc, char* argv[])
         if(!bmp_read("sky.bmp", &sky.t_width, &sky.t_height,
                      &sky.rarray, &sky.garray, &sky.barray)) {
                 //std::cout << int (texture.rarray[1]) << '\n';
-                std::cout << "Texture is read \n";
+                std::cout << "Sky Texture is read \n";
         } else {
                 std::cout << "/* Reading sky texture Error */" << '\n';
                 return 0;
@@ -65,7 +71,7 @@ int main(int argc, char* argv[])
         if(!bmp_read("water.bmp", &water.t_width, &water.t_height,
                      &water.rarray, &water.garray, &water.barray)) {
                 //std::cout << int (texture.rarray[1]) << '\n';
-                std::cout << "Texture is read \n";
+                std::cout << "Water Texture is read \n";
         } else {
                 std::cout << "/* Reading water texture Error */" << '\n';
                 return 0;
@@ -74,59 +80,79 @@ int main(int argc, char* argv[])
         if(!bmp_read("sun.bmp", &sun.t_width, &sun.t_height,
                      &sun.rarray, &sun.garray, &sun.barray)) {
                 //std::cout << int (texture.rarray[1]) << '\n';
-                std::cout << "Texture is read \n";
+                std::cout << "Sun Texture is read \n";
         } else {
                 std::cout << "/*Readint sun texture  Error */" << '\n';
                 return 0;
         }
 
+        if(!bmp_read("checker.bmp", &checker.t_width, &checker.t_height,
+                     &checker.rarray, &checker.garray, &checker.barray)) {
+                //std::cout << int (texture.rarray[1]) << '\n';
+                std::cout << "checker Texture is read \n";
+        } else {
+                std::cout << "/*Readint checker texture  Error */" << '\n';
+                return 0;
+        }
+
 
         // Defines a point light source.
-        PointLight* pLight = new PointLight(Point3D(0,0,0), Color(0.9,0.9,0.9));
+        PointLight* pLight = new PointLight(Point3D(-3,0,0), Color(0.9,0.9,0.9));
         light_list.push_back(pLight);
 
         //-------------- additional light source --------------
-        PointLight* pLight2 = new PointLight(Point3D(0,3,0), Color(0.9,0.9,0.9));
-        light_list.push_back(pLight2);
+        // PointLight* pLight2 = new PointLight(Point3D(0,3,0), Color(0.9,0.9,0.9));
+        // light_list.push_back(pLight2);
         //------------------------------------------------------
 
         //-------------- additional light source --------------
-        PointLight* pLight3 = new PointLight(Point3D(5,0,0), Color(0.9,0.9,0.9));
-        light_list.push_back(pLight3);
+        // PointLight* pLight3 = new PointLight(Point3D(5,0,0), Color(0.9,0.9,0.9));
+        // light_list.push_back(pLight3);
         //------------------------------------------------------
 
 
         // Add a unit square into the scene with material mat.
         SceneNode* sphere = new SceneNode(new UnitSphere(), &sun);
         scene.push_back(sphere);
+
         SceneNode* plane = new SceneNode(new UnitSquare(), &sky);
         scene.push_back(plane);
 
         //-------------------- additional plane --------------------
+        SceneNode* sphere2 = new SceneNode(new UnitSphere(), &checker);
+        scene.push_back(sphere2);
+
+        // SceneNode* sphere3 = new SceneNode(new UnitSphere(), &gold);
+        // scene.push_back(sphere3);
+
         SceneNode* plane2 = new SceneNode(new UnitSquare(), &jade);
         scene.push_back(plane2);
 
-        SceneNode* cube = new SceneNode(new UnitCube(), &water);
-        scene.push_back(cube);
+        // SceneNode* plane3 = new SceneNode(new UnitSquare(), &jade);
+        // scene.push_back(plane3);
 
-        SceneNode* plane3 = new SceneNode(new UnitSquare(), &jade);
-        scene.push_back(plane3);
+        SceneNode* cube = new SceneNode(new UnitCube(), &checker);
+        scene.push_back(cube);
         //-----------------------------------------------------------
 
 
 
         // Apply some transformations to the sphere and unit square.
         double factor1[3] = { 1.0, 1.0, 1.0 };
-        sphere->translate(Vector3D(0, 0, -5));
-        sphere->rotate('x', -90);
-        sphere->rotate('z', 90);
+        sphere->translate(Vector3D(-2, 2, -7));
+        //sphere->rotate('x', -90);
+        //sphere->rotate('z', 90);
         sphere->scale(Point3D(0, 0, 0), factor1);
 
-        cube->translate(Vector3D(0, 0, -5));
+        double factor4[3] = { 0.5, 1, 0.5 };
+        sphere2->translate(Vector3D(-0.5, 0.5, -7));
+        sphere2->scale(Point3D(0, 0, 0), factor4);
+
+        double factor3[3] = { 2.0, 2.0, 2.0 };
+        cube->translate(Vector3D(1, -3, -4));
         cube->rotate('x', -90);
         cube->rotate('z', 90);
-        cube->translate(Vector3D(-2, 0, -2));
-        cube->scale(Point3D(0, 0, 0), factor1);
+        cube->scale(Point3D(0, 0, 0), factor3);
 
         double factor2[3] = { 6.0, 6.0, 6.0 };
         plane->translate(Vector3D(0, 0, -8));
@@ -134,18 +160,16 @@ int main(int argc, char* argv[])
         plane->scale(Point3D(0, 0, 0), factor2);
 
         //-------------------- additional plane --------------------
-        double factor3[3] = { 6.0, 6.0, 6.0 };
         plane2->translate(Vector3D(0,  -1, -5));
         plane2->rotate('z', 90);
         plane2->rotate('y', 90);
         plane2->translate(Vector3D(0,  0, -2));
-        plane2->scale(Point3D(0, 0, 0), factor3);
+        plane2->scale(Point3D(0, 0, 0), factor2);
 
-        plane3->translate(Vector3D(0,  0, -5));
-        //plane3->rotate('x', 90);
-        plane3->rotate('y', 90);
-        plane3->translate(Vector3D(0,  0, -3));
-        plane3->scale(Point3D(0, 0, 0), factor3);
+        // plane3->translate(Vector3D(0,  0, -5));
+        // plane3->rotate('y', 90);
+        // plane3->translate(Vector3D(0,  0, -3));
+        // plane3->scale(Point3D(0, 0, 0), factor2);
 
         //-----------------------------------------------------------
 

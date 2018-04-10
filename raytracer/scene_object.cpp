@@ -11,6 +11,8 @@
 #include <iostream>
 using namespace std;
 
+// Reference:
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-plane-and-ray-disk-intersection
 bool UnitSquare::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
                            const Matrix4x4& modelToWorld) {
         // TODO: implement intersection code for UnitSquare, which is
@@ -65,6 +67,9 @@ bool UnitSquare::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
         return false;
 }
 
+
+// Reference:
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-sphere-intersection
 bool UnitSphere::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
                            const Matrix4x4& modelToWorld) {
         // TODO: implement intersection code for UnitSphere, which is centred
@@ -138,6 +143,8 @@ bool UnitSphere::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
 }
 
 // ---------------------- Cube intersection ---------------------------- //
+// Reference :
+// https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
 bool UnitCube::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
                          const Matrix4x4& modelToWorld) {
         // TODO: implement intersection code for UnitCube, which is
@@ -205,6 +212,7 @@ bool UnitCube::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
                         normal = Vector3D(1.0,0.0,0.0);
                         ray.intersection.u = intersectP[1]/4.0 + 0.25;
                         ray.intersection.v = 0.34 - intersectP[2]/3.0;
+                        //std::cout << ray.intersection.u << " and " << ray.intersection.v << '\n';
 
                 } else if ((0-intersectP[0]) < 1e-15) {
                         normal = Vector3D(-1.0,0.0,0.0);
@@ -215,14 +223,17 @@ bool UnitCube::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
                         normal = Vector3D(0.0,1.0,0.0);
                         ray.intersection.u = 0.5 + intersectP[2]/4.0;
                         ray.intersection.v = 0.67 - intersectP[0]/3.0;
+
                 } else if ((0-intersectP[1]) < 1e-15) {
                         normal = Vector3D(0.0,-1.0,0.0);
                         ray.intersection.u = 0.25 - intersectP[2]/4.0;
                         ray.intersection.v = 0.67 - intersectP[0]/3.0;
+
                 } else if ((1 - intersectP[2]) < 1e-15) {
                         normal = Vector3D(0.0,0.0,1.0);
                         ray.intersection.u = 1.0 - intersectP[1]/4.0;
                         ray.intersection.v = 0.67 - intersectP[0]/3.0;
+
                 } else if ((0-intersectP[2]) < 1e-15) {
                         normal = Vector3D(0.0,0.0,-1.0);
                         ray.intersection.u = 0.25 + intersectP[1]/4.0;
@@ -234,8 +245,8 @@ bool UnitCube::intersect(Ray3D& ray, const Matrix4x4& worldToModel,
                 }
 
 
+
                 ray.intersection.normal = transNorm(worldToModel, normal);
-                //ray.intersection.normal.normalize();
                 ray.intersection.none = false;
                 ray.intersection.t_value = t;
 
